@@ -1306,7 +1306,17 @@ class Lightify:
                 payload = data[pos:pos + 18]
 
                 (idx, name) = struct.unpack('<H16s', payload)
-                name = name.decode('utf-8').replace('\0', '')
+                try:
+                    name = name.decode('utf-8').replace('\0', '')
+                except UnicodeDecodeError as err:
+                    self.__logger.warning(
+                        'Couldn\'t decode group name:')
+                    self.__logger.warning('UnicodeDecodeError: %s', err)
+                    self.__logger.warning('payload: %s',
+                                          binascii.hexlify(payload))
+                    self.__logger.warning('data: %s',
+                                          binascii.hexlify(data))
+                    return {}
 
                 if name in self.__groups and self.__groups[name].idx() == idx:
                     group = self.__groups[name]
@@ -1560,6 +1570,8 @@ class Lightify:
                     self.__logger.warning('struct.error: %s', err)
                     self.__logger.warning('payload: %s',
                                           binascii.hexlify(payload))
+                    self.__logger.warning('data: %s',
+                                          binascii.hexlify(data))
                     return {}
 
                 (type_id, version, reachable, groups, onoff, lum, temp, red,
@@ -1580,6 +1592,12 @@ class Lightify:
                             'Unknown device type id: %s. Please report to '
                             'https://github.com/tfriedel/python-lightify',
                             type_id)
+                        self.__logger.warning('payload: %s',
+                                              binascii.hexlify(payload))
+                        self.__logger.warning('data: %s',
+                                              binascii.hexlify(data))
+                        return {}
+
                         if (red, green, blue) == NO_RGB_VALUES:
                             type_id_assumed = TYPE_LIGHT_TUNABLE_WHITE
                         else:
